@@ -12,7 +12,8 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++11 -frtti -fexceptions"
+                abiFilters "arm64-v8a"
+                cppFlags "-std=c++11 -frtti -fexceptions -g"
             }
         }
     }
@@ -35,4 +36,5 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     testCompile 'junit:junit:4.12'
+    compile 'com.google.vr:sdk-base:1.20.0'
 }
