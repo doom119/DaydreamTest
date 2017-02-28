@@ -18,7 +18,14 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              # Associated headers in the same location as their source
              # file are automatically included.
-             src/main/cpp/native-lib.cpp )
+             src/main/cpp/native-lib.cpp
+             src/main/cpp/Vulkan.cpp
+             src/main/cpp/vulkan_jni.cpp)
+
+# build native_app_glue as a static lib
+set(APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
+include_directories(${APP_GLUE_DIR})
+add_library( app-glue STATIC ${APP_GLUE_DIR}/android_native_app_glue.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because system libraries are included in the search path by
@@ -35,6 +42,8 @@ find_library( # Sets the name of the path variable.
 
 find_library(vulkan-lib vulkan)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_ANDROID_KHR")
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in the
 # build script, prebuilt third-party libraries, or system libraries.
@@ -46,4 +55,4 @@ target_link_libraries( # Specifies the target library.
                        # included in the NDK.
                        ${log-lib}
 
-                       ${vulkan-lib})
+                       ${vulkan-lib} app-glue android)

@@ -1,6 +1,7 @@
 package com.doom119.test.daydreamtest;
 
 import android.util.Log;
+import android.view.Surface;
 
 /**
  * Created by doom119 on 17/2/26.
@@ -18,5 +19,6 @@ public class Vulkan {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public static native String stringFromJNI();
+    public static native boolean init();
+    public static native boolean setSurface(Surface surface);
 }

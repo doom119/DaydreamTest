@@ -26,8 +26,6 @@ public class MainActivity extends GvrActivity implements GvrView.StereoRenderer{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Vulkan.stringFromJNI();
-
         mGvrView = (GvrView)findViewById(R.id.gvr_view);
         mGvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
         mGvrView.setRenderer(this);

@@ -2,7 +2,12 @@
 #include <string>
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <android_native_app_glue.h>
+#include <android/native_window_jni.h>
 #include "log.h"
+
+
+
 
 extern "C"
 jstring
