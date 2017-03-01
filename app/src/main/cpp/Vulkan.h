@@ -16,12 +16,22 @@ private:
     VkPhysicalDevice mVkPhysicalDevice;
     VkDevice mVkLogicalDevice;
     VkSurfaceKHR mSurfaceKHR;
+    VkSurfaceCapabilitiesKHR mSurfaceCapabilitiesKHR;
+    VkSurfaceFormatKHR mSurfaceFormatKHR;
+    VkPresentModeKHR mPresentModeKHR;
 private:
     bool _createInstance();
     bool _selectPhysicalDevice();
     bool _createLogicDevice();
+    bool _getPhysicalDeviceSurfaceCapalities();
+    bool _getPhysicalDeviceSurfaceFormats();
+    bool _getPhysicalDeviceSurfacePresentModes();
+
     void _dumpInstanceExtensionProperties();
     void _dumpPhysicalDeviceProperties();
+    void _dumpPhysicalDeviceSurfaceCapabilities();
+    void _dumpPhysicalDeviceSurfaceFormat();
+    void _dumpPhysicalDeviceSurfacePresentMode();
 
 public:
     bool init();
