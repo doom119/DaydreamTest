@@ -20,7 +20,8 @@ add_library( # Sets the name of the library.
              # file are automatically included.
              src/main/cpp/native-lib.cpp
              src/main/cpp/Vulkan.cpp
-             src/main/cpp/vulkan_jni.cpp)
+             src/main/cpp/vulkan_jni.cpp
+             src/main/cpp/VkInstanceHolder.cpp)
 
 # build native_app_glue as a static lib
 set(APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)
@@ -42,7 +43,7 @@ find_library( # Sets the name of the path variable.
 
 find_library(vulkan-lib vulkan)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_ANDROID_KHR")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_USE_PLATFORM_ANDROID_KHR -DDEBUG")
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in the

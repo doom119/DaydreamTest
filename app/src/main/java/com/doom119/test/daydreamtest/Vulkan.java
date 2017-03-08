@@ -20,5 +20,6 @@ public class Vulkan {
      * which is packaged with this application.
      */
     public static native boolean init();
+    public static native void shutdown();
     public static native boolean setSurface(Surface surface);
 }

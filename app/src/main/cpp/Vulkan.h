@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 #include <android/native_window.h>
 #include "log.h"
+#include "VkInstanceHolder.h"
 
 class Vulkan
 {
@@ -19,23 +20,25 @@ private:
     VkSurfaceCapabilitiesKHR mSurfaceCapabilitiesKHR;
     VkSurfaceFormatKHR mSurfaceFormatKHR;
     VkPresentModeKHR mPresentModeKHR;
+
+    VkInstanceHolder* pInstanceHolder;
 private:
-    bool _createInstance();
     bool _selectPhysicalDevice();
     bool _createLogicDevice();
     bool _getPhysicalDeviceSurfaceCapalities();
     bool _getPhysicalDeviceSurfaceFormats();
     bool _getPhysicalDeviceSurfacePresentModes();
 
-    void _dumpInstanceExtensionProperties();
     void _dumpPhysicalDeviceProperties();
     void _dumpPhysicalDeviceSurfaceCapabilities();
     void _dumpPhysicalDeviceSurfaceFormat();
     void _dumpPhysicalDeviceSurfacePresentMode();
 
 public:
+    Vulkan():pInstanceHolder(nullptr){}
     bool init();
     bool setSurface(ANativeWindow *window);
+    void shutdown();
 };
 
 

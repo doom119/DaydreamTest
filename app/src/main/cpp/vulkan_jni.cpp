@@ -5,6 +5,8 @@
 #include <android/native_window_jni.h>
 #include "Vulkan.h"
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,6 +23,12 @@ JNIEXPORT jboolean JNICALL
 Java_com_doom119_test_daydreamtest_Vulkan_init(JNIEnv *env, jclass type)
 {
     return gVulkan.init();
+}
+
+JNIEXPORT void JNICALL
+Java_com_doom119_test_daydreamtest_Vulkan_shutdown(JNIEnv *env, jclass type)
+{
+    gVulkan.shutdown();
 }
 
 #ifdef __cplusplus

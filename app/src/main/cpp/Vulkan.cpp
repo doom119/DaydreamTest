@@ -7,48 +7,18 @@
 
 bool Vulkan::init()
 {
-    return _createInstance() && _selectPhysicalDevice() && _createLogicDevice();
+//    return _createInstance() && _selectPhysicalDevice() && _createLogicDevice();
+    if(nullptr != pInstanceHolder)
+    {
+        delete pInstanceHolder;
+    }
+    pInstanceHolder = new VkInstanceHolder();
+    return pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
 }
 
-bool Vulkan::_createInstance()
+void Vulkan::shutdown()
 {
-    _dumpInstanceExtensionProperties();
-
-    VkApplicationInfo appinfo = {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pNext = nullptr,
-            .pApplicationName = "DaydreamTest",
-            .pEngineName = "VulkanTest",
-            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .apiVersion = VK_API_VERSION_1_0,
-            .engineVersion = VK_MAKE_VERSION(1, 0, 0)
-    };
-
-    std::vector<const char *> instanceExt;
-    instanceExt.push_back("VK_KHR_surface");
-    instanceExt.push_back("VK_KHR_android_surface");
-    VkInstanceCreateInfo intanceCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .pApplicationInfo = &appinfo,
-            .enabledLayerCount = 0,
-            .ppEnabledLayerNames = nullptr,
-            .enabledExtensionCount = static_cast<uint32_t>(instanceExt.size()),
-            .ppEnabledExtensionNames = instanceExt.data()
-    };
-
-    VkResult result = vkCreateInstance(&intanceCreateInfo, nullptr, &mVkInstance);
-    if(result == VK_SUCCESS)
-    {
-        LOGI("Create Vulkan Instance Success");
-        return true;
-    }
-    else
-    {
-        LOGE("Create Vulkan Instance Failed, result=%d", result);
-        return false;
-    }
+    delete pInstanceHolder;
 }
 
 bool Vulkan::_selectPhysicalDevice()
@@ -197,30 +167,6 @@ bool Vulkan::setSurface(ANativeWindow *window)
 
     LOGD("Create Android Surface Success");
     return true;
-}
-
-void Vulkan::_dumpInstanceExtensionProperties()
-{
-    uint32_t propertyCount = 0;
-    VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &propertyCount, nullptr);
-    if(VK_SUCCESS != result)
-    {
-        LOGW("Enumerate Instance Extension Properties Failed, result=%d", result);
-        return;
-    }
-    VkExtensionProperties properties[propertyCount];
-    result = vkEnumerateInstanceExtensionProperties(nullptr, &propertyCount, properties);
-    if(VK_SUCCESS != result)
-    {
-        LOGW("Get Instance Extension Properties Failed, result=%d", result);
-        return;
-    }
-    for(int i = 0; i < propertyCount; ++i)
-    {
-        LOGD("Extension Property %d:\n", i);
-        LOGD("\textensionName: %s", properties[i].extensionName);
-        LOGD("\tspecVersion: %d", properties[i].specVersion);
-    }
 }
 
 void Vulkan::_dumpPhysicalDeviceProperties()
