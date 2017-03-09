@@ -14,7 +14,8 @@ class VkInstanceHolder
 {
 public:
     VkInstanceHolder();
-    bool createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion);
+    const VkInstance& createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion);
+    const VkInstance& getVkInstance() const;
 
     virtual ~VkInstanceHolder();
 private:

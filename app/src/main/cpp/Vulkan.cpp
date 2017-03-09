@@ -13,33 +13,15 @@ bool Vulkan::init()
         delete pInstanceHolder;
     }
     pInstanceHolder = new VkInstanceHolder();
-    return pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
+    const VkInstance& vkInstance = pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
+    pDeviceHolder = new VkDeviceHolder(vkInstance);
+
+    return true;
 }
 
 void Vulkan::shutdown()
 {
     delete pInstanceHolder;
-}
-
-bool Vulkan::_selectPhysicalDevice()
-{
-    uint32_t gpuCount = 0;
-    VkResult result = vkEnumeratePhysicalDevices(mVkInstance, &gpuCount, nullptr);
-    if(VK_SUCCESS != result)
-    {
-        LOGE("Enumerate Physical Devices Failed, result=%d", result);
-        return false;
-    }
-    VkPhysicalDevice devices[gpuCount];
-    result = vkEnumeratePhysicalDevices(mVkInstance, &gpuCount, devices);
-    if(VK_SUCCESS != result)
-    {
-        LOGE("Get Physical Devices Failed, result=%d", result);
-        return false;
-    }
-    mVkPhysicalDevice = devices[0];
-    _dumpPhysicalDeviceProperties();
-    return true;
 }
 
 bool Vulkan::_getPhysicalDeviceSurfaceCapalities()
@@ -167,34 +149,6 @@ bool Vulkan::setSurface(ANativeWindow *window)
 
     LOGD("Create Android Surface Success");
     return true;
-}
-
-void Vulkan::_dumpPhysicalDeviceProperties()
-{
-    VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties(mVkPhysicalDevice, &properties);
-    LOGD("Vulkan Physical Device Properties:\n");
-    LOGD("\tDeviceName: %s", properties.deviceName);
-    LOGD("\tDeviceId: %d", properties.deviceID);
-    LOGD("\tDeviceType: %d", properties.deviceType);
-    LOGD("\tDriverVersion: %d", properties.driverVersion);
-    LOGD("\tVenderId: %d", properties.vendorID);
-    LOGD("\tDevice apiVersion: %d.%d.%d",
-         VK_VERSION_MAJOR(properties.apiVersion),
-         VK_VERSION_MINOR(properties.apiVersion),
-         VK_VERSION_PATCH(properties.apiVersion));
-
-    LOGD("\tin limits:\n");
-    LOGD("\t\tmaxImageDimension2D: %d", properties.limits.maxImageDimension2D);
-    LOGD("\t\tmaxImageDimension3D: %d", properties.limits.maxImageDimension3D);
-    //TODO more in limits
-
-    LOGD("\tin sparseProperties:\n");
-    LOGD("\t\tresidencyAlignedMipSize: %d", properties.sparseProperties.residencyAlignedMipSize);
-    LOGD("\t\tresidencyNonResidentStrict: %d", properties.sparseProperties.residencyNonResidentStrict);
-    LOGD("\t\tresidencyStandard2DBlockShape: %d", properties.sparseProperties.residencyStandard2DBlockShape);
-    LOGD("\t\tresidencyStandard3DBlockShape: %d", properties.sparseProperties.residencyStandard3DBlockShape);
-    LOGD("\t\tresidencyStandard2DMultisampleBlockShape: %d", properties.sparseProperties.residencyStandard2DMultisampleBlockShape);
 }
 
 void Vulkan::_dumpPhysicalDeviceSurfaceCapabilities()

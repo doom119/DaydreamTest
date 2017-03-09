@@ -21,7 +21,8 @@ add_library( # Sets the name of the library.
              src/main/cpp/native-lib.cpp
              src/main/cpp/Vulkan.cpp
              src/main/cpp/vulkan_jni.cpp
-             src/main/cpp/VkInstanceHolder.cpp)
+             src/main/cpp/VkInstanceHolder.cpp
+             src/main/cpp/VkDeviceHolder.cpp)
 
 # build native_app_glue as a static lib
 set(APP_GLUE_DIR ${ANDROID_NDK}/sources/android/native_app_glue)

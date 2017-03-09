@@ -68,7 +68,7 @@ void VkInstanceHolder::_getExtensionProperties()
     }
 }
 
-bool VkInstanceHolder::createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion)
+const VkInstance& VkInstanceHolder::createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion)
 {
     VkApplicationInfo appInfo = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -95,13 +95,18 @@ bool VkInstanceHolder::createInstance(std::string appName, uint32_t appVersion, 
     if(result == VK_SUCCESS)
     {
         LOGI("Create Vulkan Instance Success");
-        return true;
+        return mInstance;
     }
     else
     {
         LOGE("Create Vulkan Instance Failed, result=%d", result);
-        return false;
+        return nullptr;
     }
+}
+
+const VkInstance& VkInstanceHolder::getVkInstance() const
+{
+    return mInstance;
 }
 
 void VkInstanceHolder::_dumpExtensionProperties()
