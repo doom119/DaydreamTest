@@ -15,26 +15,35 @@ public:
     VkDeviceHolder(const VkInstance& instance);
     uint32_t getDeviceCount();
     bool isDiscreteGPU(uint32_t handle);
-    int32_t supportGraphicsQueueFamily(uint32_t handle);
-    bool selectPhysicalDevice(uint32_t deviceHandle, uint32_t queueFamilyHandle);
+    int32_t supportGraphicsQueueFamily(uint32_t deviceIndex);
+    bool selectPhysicalDevice(uint32_t deviceIndex, uint32_t queueFamilyIndex);
+    bool createLogicalDevice();
+
+    virtual ~VkDeviceHolder() { vkDestroyDevice(mLogicalDevice, nullptr); }
 
 private:
-    const VkPhysicalDeviceProperties& _getPhysicalDeviceProperties(const VkPhysicalDevice& device);
-    const VkPhysicalDeviceFeatures& _getPhysicalDeviceFeatures(const VkPhysicalDevice& device);
-    const std::vector<VkQueueFamilyProperties>& _getPhysicalDeviceQueueFamilyProperties(const VkPhysicalDevice& device);
+    void _getPhysicalDeviceProperties(const VkPhysicalDevice&, VkPhysicalDeviceProperties&);
+    void _getPhysicalDeviceFeatures(const VkPhysicalDevice&, VkPhysicalDeviceFeatures&);
+    void _getPhysicalDeviceQueueFamilyProperties(const VkPhysicalDevice&, std::vector<VkQueueFamilyProperties>&);
+    void _getPhysicalDeviceExtensionProperties(const VkPhysicalDevice&, std::vector<VkExtensionProperties>&);
 
-    void _dumpPhysicalDeviceProperties(const VkPhysicalDeviceProperties& properties);
-    void _dumpPhysicalDeviceFeatures(const VkPhysicalDeviceFeatures& features);
-    void _dumpPhysicalDeviceQueueFamilyProperties(const VkQueueFamilyProperties& properties);
+    void _dumpPhysicalDeviceProperties(const VkPhysicalDeviceProperties&);
+    void _dumpPhysicalDeviceFeatures(const VkPhysicalDeviceFeatures&);
+    void _dumpPhysicalDeviceQueueFamilyProperties(const VkQueueFamilyProperties&);
+    void _dumpPhysicalDeviceExtensionProperties(const VkExtensionProperties&);
 
 private:
     bool mIsInited;
-    uint32_t mSelectedPhysicalDevice;
+    int32_t mSelectedPhysicalDeviceIndex;
+    int32_t mSelectedQueueFamilyIndex;
     VkPhysicalDeviceProperties mSelectedPhysicalDeviceProperties;
+    //VkExtensionProperties mSelectedExtensionProperties;
     VkPhysicalDeviceFeatures mSelectedPhysicalDeviceFeatures;
     VkQueueFamilyProperties mSelectedQueueFamilyProperties;
-    std::vector<VkQueueFamilyProperties> mSelectedPhysicalDeviceQueueFamilyProperties;
+//    std::vector<VkQueueFamilyProperties> mSelectedPhysicalDeviceQueueFamilyProperties;
     std::vector<VkPhysicalDevice> mPhysicalDevices;
+    VkDevice mLogicalDevice;
+    VkQueue mLogicalDeviceQueue;
 };
 
 

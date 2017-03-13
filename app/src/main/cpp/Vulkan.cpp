@@ -15,6 +15,23 @@ bool Vulkan::init()
     pInstanceHolder = new VkInstanceHolder();
     const VkInstance& vkInstance = pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
     pDeviceHolder = new VkDeviceHolder(vkInstance);
+    int deviceCount = pDeviceHolder->getDeviceCount();
+    int selectedDevice = -1;
+    int selectedQueueFamily = -1;
+    for(int i = 0; i < deviceCount; ++i)
+    {
+        if((selectedQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i)) >= 0)
+        {
+            selectedDevice = i;
+            break;
+        }
+    }
+    LOGD("selectedDevice=%d, selectedQueueFamily=%d", selectedDevice, selectedQueueFamily);
+    if(selectedDevice >= 0 && selectedQueueFamily >= 0)
+    {
+        pDeviceHolder->selectPhysicalDevice(selectedDevice, selectedQueueFamily);
+        pDeviceHolder->createLogicalDevice();
+    }
 
     return true;
 }
