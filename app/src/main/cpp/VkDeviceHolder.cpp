@@ -5,7 +5,7 @@
 #include "VkDeviceHolder.h"
 #include "log.h"
 
-VkDeviceHolder::VkDeviceHolder(const VkInstance& instance)
+VkDeviceHolder::VkDeviceHolder(const VkInstance& instance):mIsInited(false)
 {
     VkResult result;
     uint32_t deviceCount = 0;
@@ -25,6 +25,8 @@ VkDeviceHolder::VkDeviceHolder(const VkInstance& instance)
             return;
         }
 
+        mIsInited = true;
+
 #ifdef DEBUG
         for(const auto& device : mPhysicalDevices)
         {
@@ -36,7 +38,70 @@ VkDeviceHolder::VkDeviceHolder(const VkInstance& instance)
     }
 }
 
-VkPhysicalDeviceProperties
+uint32_t VkDeviceHolder::getDeviceCount()
+{
+    if(!mIsInited)
+    {
+        return 0;
+    }
+
+    return mPhysicalDevices.size();
+}
+
+bool VkDeviceHolder::isDiscreteGPU(uint32_t index)
+{
+    if(!mIsInited)
+    {
+        return false;
+    }
+
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties(mPhysicalDevices.at(index), &properties);
+    if(properties.deviceType & VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+    {
+        return true;
+    }
+    return false;
+}
+
+int32_t VkDeviceHolder::supportGraphicsQueueFamily(uint32_t handle)
+{
+    if(!mIsInited)
+    {
+        return -1;
+    }
+
+    uint32_t count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices.at(handle), &count, nullptr);
+    std::vector<VkQueueFamilyProperties> properties(count);
+    vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevices.at(handle), &count, properties.data());
+    for(int i = 0; i < properties.size(); ++i)
+    {
+        if(properties.at(i).queueFlags & VkQueueFlagBits::VK_QUEUE_GRAPHICS_BIT)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+bool VkDeviceHolder::selectPhysicalDevice(uint32_t deviceHandle, uint32_t queueFamilyHandle)
+{
+    if(!mIsInited || deviceHandle >= mPhysicalDevices.size())
+    {
+        return false;
+    }
+
+    mSelectedPhysicalDevice = deviceHandle;
+    mSelectedPhysicalDeviceProperties = _getPhysicalDeviceProperties(mPhysicalDevices.at(deviceHandle));
+    mSelectedPhysicalDeviceQueueFamilyProperties = _getPhysicalDeviceQueueFamilyProperties(mPhysicalDevices.at(deviceHandle));
+    mSelectedPhysicalDeviceFeatures = _getPhysicalDeviceFeatures(mPhysicalDevices.at(deviceHandle));
+    mSelectedQueueFamilyProperties = mSelectedPhysicalDeviceQueueFamilyProperties.at(queueFamilyHandle);
+    return true;
+}
+
+const VkPhysicalDeviceProperties&
 VkDeviceHolder::_getPhysicalDeviceProperties(const VkPhysicalDevice& device)
 {
     VkPhysicalDeviceProperties properties;
@@ -48,7 +113,7 @@ VkDeviceHolder::_getPhysicalDeviceProperties(const VkPhysicalDevice& device)
     return properties;
 }
 
-VkPhysicalDeviceFeatures
+const VkPhysicalDeviceFeatures&
 VkDeviceHolder::_getPhysicalDeviceFeatures(const VkPhysicalDevice& device)
 {
     VkPhysicalDeviceFeatures features;
@@ -60,7 +125,7 @@ VkDeviceHolder::_getPhysicalDeviceFeatures(const VkPhysicalDevice& device)
     return features;
 }
 
-std::vector<VkQueueFamilyProperties>
+const std::vector<VkQueueFamilyProperties>&
 VkDeviceHolder::_getPhysicalDeviceQueueFamilyProperties(const VkPhysicalDevice& device)
 {
     std::vector<VkQueueFamilyProperties> properties;
