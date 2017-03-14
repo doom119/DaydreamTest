@@ -2,6 +2,8 @@
 // Created by Doom119 on 17/3/9.
 //
 
+#include <memory.h>
+#include <string>
 #include "VkDeviceHolder.h"
 #include "log.h"
 
@@ -96,28 +98,107 @@ int32_t VkDeviceHolder::supportGraphicsQueueFamily(uint32_t deviceIndex)
     return -1;
 }
 
-bool VkDeviceHolder::selectPhysicalDevice(uint32_t deviceIndex, uint32_t queueFamilyIndex)
+int32_t VkDeviceHolder::supportPresentQueueFamily(uint32_t deviceIndex, VkSurfaceKHR surface)
+{
+    if(!mIsInited)
+    {
+        return -1;
+    }
+
+    std::vector<VkQueueFamilyProperties> properties;
+    _getPhysicalDeviceQueueFamilyProperties(mPhysicalDevices.at(deviceIndex), properties);
+    VkBool32 isSupport = false;
+    for(int i = 0; i < properties.size(); ++i)
+    {
+        VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevices.at(deviceIndex), i, surface, &isSupport);
+        if(VK_SUCCESS != result)
+        {
+            LOGW("Get Physical Device %d Surface Support Failed, result=%d", i, result);
+        }
+        else if(isSupport)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+bool VkDeviceHolder::supportKHRSwapChain(uint32_t deviceIndex)
+{
+    std::vector<VkExtensionProperties> properties;
+    _getPhysicalDeviceExtensionProperties(mPhysicalDevices.at(deviceIndex), properties);
+    for(const auto& property : properties)
+    {
+        if(!strcmp(property.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool VkDeviceHolder::selectPhysicalDevice(uint32_t deviceIndex)
 {
     if(!mIsInited || deviceIndex >= mPhysicalDevices.size())
     {
         return false;
     }
 
+    mSelectedPhysicalDevice = mPhysicalDevices.at(deviceIndex);
     mSelectedPhysicalDeviceIndex = deviceIndex;
-    VkPhysicalDevice device = mPhysicalDevices.at(deviceIndex);
 
-    _getPhysicalDeviceProperties(device, mSelectedPhysicalDeviceProperties);
-    _getPhysicalDeviceFeatures(device, mSelectedPhysicalDeviceFeatures);
+//    _getPhysicalDeviceProperties(mSelectedPhysicalDevice, mSelectedPhysicalDeviceProperties);
+//    _getPhysicalDeviceFeatures(mSelectedPhysicalDevice, mSelectedPhysicalDeviceFeatures);
 
-    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
-    _getPhysicalDeviceQueueFamilyProperties(device, queueFamilyProperties);
-    mSelectedQueueFamilyProperties = queueFamilyProperties.at(queueFamilyIndex);
-    mSelectedQueueFamilyIndex = queueFamilyIndex;
-
-    std::vector<VkExtensionProperties> extensionProperties;
-    _getPhysicalDeviceExtensionProperties(device, extensionProperties);
     return true;
 }
+
+bool VkDeviceHolder::selectGraphicsQueueFamily(uint32_t queueFamilyIndex)
+{
+    if(!mIsInited)
+    {
+        return false;
+    }
+
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+    _getPhysicalDeviceQueueFamilyProperties(mSelectedPhysicalDevice, queueFamilyProperties);
+    if(queueFamilyIndex >= queueFamilyProperties.size())
+    {
+        return false;
+    }
+    mSelectedGraphicsQueueFamilyIndex = queueFamilyIndex;
+    return true;
+}
+
+bool VkDeviceHolder::selectPresentQueueFamily(uint32_t queueFamilyIndex)
+{
+    if(!mIsInited)
+    {
+        return false;
+    }
+
+    std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+    _getPhysicalDeviceQueueFamilyProperties(mSelectedPhysicalDevice, queueFamilyProperties);
+    if(queueFamilyIndex >= queueFamilyProperties.size())
+    {
+        return false;
+    }
+    mSelectedPresentQueueFamilyIndex = queueFamilyIndex;
+    return true;
+}
+
+void VkDeviceHolder::addExtensionName(const char* name)
+{
+    if(nullptr == name)
+    {
+        return;
+    }
+
+    mExtensionNames.push_back(name);
+}
+
 
 bool VkDeviceHolder::createLogicalDevice()
 {
@@ -126,7 +207,7 @@ bool VkDeviceHolder::createLogicalDevice()
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
-            .queueFamilyIndex = static_cast<uint32_t>(mSelectedQueueFamilyIndex),
+            .queueFamilyIndex = static_cast<uint32_t>(mSelectedGraphicsQueueFamilyIndex),
             .queueCount = 1,
             .pQueuePriorities = &queuePriorities
     };
@@ -135,8 +216,8 @@ bool VkDeviceHolder::createLogicalDevice()
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
-            .enabledExtensionCount = 0,
-            .ppEnabledExtensionNames = nullptr,
+            .enabledExtensionCount = static_cast<uint32_t>(mExtensionNames.size()),
+            .ppEnabledExtensionNames = mExtensionNames.data(),
             .enabledLayerCount = 0,
             .ppEnabledLayerNames = nullptr,
             .pEnabledFeatures = nullptr,
@@ -150,7 +231,7 @@ bool VkDeviceHolder::createLogicalDevice()
         return false;
     }
 
-    vkGetDeviceQueue(mLogicalDevice, mSelectedQueueFamilyIndex, 0, &mLogicalDeviceQueue);
+    vkGetDeviceQueue(mLogicalDevice, mSelectedGraphicsQueueFamilyIndex, 0, &mLogicalDeviceQueue);
 
     return true;
 }

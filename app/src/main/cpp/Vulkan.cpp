@@ -17,20 +17,22 @@ bool Vulkan::init()
     pDeviceHolder = new VkDeviceHolder(vkInstance);
     int deviceCount = pDeviceHolder->getDeviceCount();
     int selectedDevice = -1;
-    int selectedQueueFamily = -1;
+    int selectedGraphicsQueueFamily = -1;
     for(int i = 0; i < deviceCount; ++i)
     {
-        if((selectedQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i)) >= 0)
+        if((selectedGraphicsQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i)) >= 0)
         {
             selectedDevice = i;
             break;
         }
     }
-    LOGD("selectedDevice=%d, selectedQueueFamily=%d", selectedDevice, selectedQueueFamily);
-    if(selectedDevice >= 0 && selectedQueueFamily >= 0)
+    LOGD("selectedDevice=%d, selectedGraphicsQueueFamily=%d", selectedDevice, selectedGraphicsQueueFamily);
+    if(selectedDevice >= 0 && selectedGraphicsQueueFamily >= 0 && pDeviceHolder->supportKHRSwapChain(selectedDevice))
     {
-        pDeviceHolder->selectPhysicalDevice(selectedDevice, selectedQueueFamily);
-        pDeviceHolder->createLogicalDevice();
+        pDeviceHolder->selectPhysicalDevice(selectedDevice);
+        pDeviceHolder->selectGraphicsQueueFamily(selectedGraphicsQueueFamily);
+
+//        pDeviceHolder->createLogicalDevice();
     }
 
     return true;
@@ -39,6 +41,7 @@ bool Vulkan::init()
 void Vulkan::shutdown()
 {
     delete pInstanceHolder;
+    delete pDeviceHolder;
 }
 
 bool Vulkan::_getPhysicalDeviceSurfaceCapalities()

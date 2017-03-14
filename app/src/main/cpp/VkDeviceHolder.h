@@ -15,8 +15,27 @@ public:
     VkDeviceHolder(const VkInstance& instance);
     uint32_t getDeviceCount();
     bool isDiscreteGPU(uint32_t handle);
+
+    //if support graphics queue family, return queue family index, otherwise return -1
     int32_t supportGraphicsQueueFamily(uint32_t deviceIndex);
-    bool selectPhysicalDevice(uint32_t deviceIndex, uint32_t queueFamilyIndex);
+
+    //if support present queue family, return queue family index, otherwise return -1
+    int32_t supportPresentQueueFamily(uint32_t deviceIndex, VkSurfaceKHR surface);
+
+    //if support VK_KHR_SWAPCHAIN, return true, otherwise return false
+    bool supportKHRSwapChain(uint32_t deviceIndex);
+
+    bool selectPhysicalDevice(uint32_t deviceIndex);
+
+    //must call selectPhysicalDevice first
+    bool selectGraphicsQueueFamily(uint32_t queueFamilyIndex);
+
+    //must call selectPhysicalDevice first
+    bool selectPresentQueueFamily(uint32_t queueFamilyIndex);
+
+    void addExtensionName(const char* name);
+
+    //must call selectPhysicalDevice first
     bool createLogicalDevice();
 
     virtual ~VkDeviceHolder() { vkDestroyDevice(mLogicalDevice, nullptr); }
@@ -34,16 +53,21 @@ private:
 
 private:
     bool mIsInited;
+
     int32_t mSelectedPhysicalDeviceIndex;
-    int32_t mSelectedQueueFamilyIndex;
-    VkPhysicalDeviceProperties mSelectedPhysicalDeviceProperties;
-    //VkExtensionProperties mSelectedExtensionProperties;
-    VkPhysicalDeviceFeatures mSelectedPhysicalDeviceFeatures;
-    VkQueueFamilyProperties mSelectedQueueFamilyProperties;
-//    std::vector<VkQueueFamilyProperties> mSelectedPhysicalDeviceQueueFamilyProperties;
+    int32_t mSelectedGraphicsQueueFamilyIndex;
+    int32_t mSelectedPresentQueueFamilyIndex;
+    std::vector<const char*> mExtensionNames;
+
     std::vector<VkPhysicalDevice> mPhysicalDevices;
+    VkPhysicalDevice mSelectedPhysicalDevice;
+
     VkDevice mLogicalDevice;
     VkQueue mLogicalDeviceQueue;
+
+//    VkPhysicalDeviceProperties mSelectedPhysicalDeviceProperties;
+//    VkPhysicalDeviceFeatures mSelectedPhysicalDeviceFeatures;
+
 };
 
 
