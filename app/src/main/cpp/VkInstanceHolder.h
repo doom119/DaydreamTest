@@ -13,9 +13,11 @@
 class VkInstanceHolder
 {
 public:
+    friend class VkDeviceHolder;
+    friend class VkSurfaceHolder;
+
     VkInstanceHolder();
     const VkInstance& createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion);
-    const VkInstance& getVkInstance() const;
 
     virtual ~VkInstanceHolder();
 private:

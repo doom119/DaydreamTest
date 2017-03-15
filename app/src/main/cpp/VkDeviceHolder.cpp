@@ -105,12 +105,13 @@ int32_t VkDeviceHolder::supportPresentQueueFamily(uint32_t deviceIndex, VkSurfac
         return -1;
     }
 
+    VkPhysicalDevice device = mPhysicalDevices.at(deviceIndex);
     std::vector<VkQueueFamilyProperties> properties;
-    _getPhysicalDeviceQueueFamilyProperties(mPhysicalDevices.at(deviceIndex), properties);
+    _getPhysicalDeviceQueueFamilyProperties(device, properties);
     VkBool32 isSupport = false;
     for(int i = 0; i < properties.size(); ++i)
     {
-        VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(mPhysicalDevices.at(deviceIndex), i, surface, &isSupport);
+        VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &isSupport);
         if(VK_SUCCESS != result)
         {
             LOGW("Get Physical Device %d Surface Support Failed, result=%d", i, result);
@@ -125,7 +126,7 @@ int32_t VkDeviceHolder::supportPresentQueueFamily(uint32_t deviceIndex, VkSurfac
 }
 
 
-bool VkDeviceHolder::supportKHRSwapChain(uint32_t deviceIndex)
+bool VkDeviceHolder::supportSwapChain(uint32_t deviceIndex)
 {
     std::vector<VkExtensionProperties> properties;
     _getPhysicalDeviceExtensionProperties(mPhysicalDevices.at(deviceIndex), properties);
@@ -202,15 +203,26 @@ void VkDeviceHolder::addExtensionName(const char* name)
 
 bool VkDeviceHolder::createLogicalDevice()
 {
-    float queuePriorities = 1.0f;
-    VkDeviceQueueCreateInfo queueCreateInfo = {
+    float queuePriorities[] = {1.0f};
+    std::vector<VkDeviceQueueCreateInfo> queues;
+    VkDeviceQueueCreateInfo graphicsQueue = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
             .queueFamilyIndex = static_cast<uint32_t>(mSelectedGraphicsQueueFamilyIndex),
             .queueCount = 1,
-            .pQueuePriorities = &queuePriorities
+            .pQueuePriorities = &queuePriorities[0]
     };
+    VkDeviceQueueCreateInfo presentQueue = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .queueFamilyIndex = static_cast<uint32_t>(mSelectedPresentQueueFamilyIndex),
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriorities[0]
+    };
+    queues.push_back(graphicsQueue);
+    queues.push_back(presentQueue);
 
     VkDeviceCreateInfo deviceCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -221,10 +233,10 @@ bool VkDeviceHolder::createLogicalDevice()
             .enabledLayerCount = 0,
             .ppEnabledLayerNames = nullptr,
             .pEnabledFeatures = nullptr,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .queueCreateInfoCount = 1
+            .pQueueCreateInfos = queues.data(),
+            .queueCreateInfoCount = static_cast<uint32_t >(queues.size())
     };
-    VkResult result = vkCreateDevice(mPhysicalDevices.at(mSelectedPhysicalDeviceIndex), &deviceCreateInfo, nullptr, &mLogicalDevice);
+    VkResult result = vkCreateDevice(mSelectedPhysicalDevice, &deviceCreateInfo, nullptr, &mLogicalDevice);
     if(VK_SUCCESS != result)
     {
         LOGE("Create Logical Device Failed, result=%d", result);

@@ -104,11 +104,6 @@ const VkInstance& VkInstanceHolder::createInstance(std::string appName, uint32_t
     }
 }
 
-const VkInstance& VkInstanceHolder::getVkInstance() const
-{
-    return mInstance;
-}
-
 void VkInstanceHolder::_dumpExtensionProperties()
 {
     LOGD("Instance Extension Properties:\n");

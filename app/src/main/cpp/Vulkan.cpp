@@ -15,25 +15,6 @@ bool Vulkan::init()
     pInstanceHolder = new VkInstanceHolder();
     const VkInstance& vkInstance = pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
     pDeviceHolder = new VkDeviceHolder(vkInstance);
-    int deviceCount = pDeviceHolder->getDeviceCount();
-    int selectedDevice = -1;
-    int selectedGraphicsQueueFamily = -1;
-    for(int i = 0; i < deviceCount; ++i)
-    {
-        if((selectedGraphicsQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i)) >= 0)
-        {
-            selectedDevice = i;
-            break;
-        }
-    }
-    LOGD("selectedDevice=%d, selectedGraphicsQueueFamily=%d", selectedDevice, selectedGraphicsQueueFamily);
-    if(selectedDevice >= 0 && selectedGraphicsQueueFamily >= 0 && pDeviceHolder->supportKHRSwapChain(selectedDevice))
-    {
-        pDeviceHolder->selectPhysicalDevice(selectedDevice);
-        pDeviceHolder->selectGraphicsQueueFamily(selectedGraphicsQueueFamily);
-
-//        pDeviceHolder->createLogicalDevice();
-    }
 
     return true;
 }
@@ -112,63 +93,66 @@ bool Vulkan::_getPhysicalDeviceSurfacePresentModes()
     return true;
 }
 
-bool Vulkan::_createLogicDevice()
-{
-    float priorities[] = {1.0f,};
-    VkDeviceQueueCreateInfo queueCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .queueCount = 1,
-            .queueFamilyIndex = 0,
-            .pQueuePriorities = priorities
-    };
-
-    std::vector<const char *> deviceExt;
-    deviceExt.push_back("VK_KHR_swapchain");
-    VkDeviceCreateInfo deviceCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .enabledLayerCount = 0,
-            .ppEnabledLayerNames = nullptr,
-            .enabledExtensionCount = static_cast<uint32_t >(deviceExt.size()),
-            .ppEnabledExtensionNames = deviceExt.data(),
-            .pEnabledFeatures = nullptr
-    };
-
-    VkResult result = vkCreateDevice(mVkPhysicalDevice, &deviceCreateInfo, nullptr, &mVkLogicalDevice);
-    if(result != VK_SUCCESS)
-    {
-        LOGE("Create Vulkan Logical Device Failed, result=%d", result);
-        return false;
-    }
-
-    return true;
-}
-
 bool Vulkan::setSurface(ANativeWindow *window)
 {
-    VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
-            .pNext = nullptr,
-            .flags = 0,
-            .window = window
-    };
-    VkResult result = vkCreateAndroidSurfaceKHR(mVkInstance, &surfaceCreateInfo, nullptr, &mSurfaceKHR);
-    if(VK_SUCCESS != result)
+    if(nullptr == pInstanceHolder || nullptr == pDeviceHolder || nullptr == window)
     {
-        LOGE("Create Android Surface Failed, result=%d", result);
         return false;
     }
 
-    _getPhysicalDeviceSurfaceCapalities();
-    _getPhysicalDeviceSurfaceFormats();
-    _getPhysicalDeviceSurfacePresentModes();
+    if(nullptr != pSurfaceHolder)
+    {
+        delete pSurfaceHolder;
+    }
 
-    LOGD("Create Android Surface Success");
-    return true;
+    pSurfaceHolder = new VkSurfaceHolder(pInstanceHolder, pDeviceHolder);
+    pSurfaceHolder->createAndroidSurface(window);
+
+    int deviceCount = pDeviceHolder->getDeviceCount();
+    int selectedDevice = -1;
+    int selectedGraphicsQueueFamily = -1;
+    int selectedPresentQueueFamily = -1;
+    for(int i = 0; i < deviceCount; ++i)
+    {
+        selectedGraphicsQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i);
+        selectedPresentQueueFamily = pDeviceHolder->supportPresentQueueFamily(i, pSurfaceHolder->getSurface());
+        if(selectedGraphicsQueueFamily >=0
+                && selectedPresentQueueFamily >=0
+                && pDeviceHolder->supportSwapChain(i))
+        {
+            selectedDevice = i;
+        }
+    }
+    LOGD("selectedDevice=%d, selectedGraphicsQueueFamily=%d", selectedDevice, selectedGraphicsQueueFamily);
+    if(selectedDevice >= 0)
+    {
+        pDeviceHolder->selectPhysicalDevice(selectedDevice);
+        pDeviceHolder->selectGraphicsQueueFamily(selectedGraphicsQueueFamily);
+        pDeviceHolder->selectPresentQueueFamily(selectedPresentQueueFamily);
+        pDeviceHolder->addExtensionName(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        pDeviceHolder->createLogicalDevice();
+    }
+
+
+//    VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {
+//            .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
+//            .pNext = nullptr,
+//            .flags = 0,
+//            .window = window
+//    };
+//    VkResult result = vkCreateAndroidSurfaceKHR(mVkInstance, &surfaceCreateInfo, nullptr, &mSurfaceKHR);
+//    if(VK_SUCCESS != result)
+//    {
+//        LOGE("Create Android Surface Failed, result=%d", result);
+//        return false;
+//    }
+//
+//    _getPhysicalDeviceSurfaceCapalities();
+//    _getPhysicalDeviceSurfaceFormats();
+//    _getPhysicalDeviceSurfacePresentModes();
+//
+//    LOGD("Create Android Surface Success");
+//    return true;
 }
 
 void Vulkan::_dumpPhysicalDeviceSurfaceCapabilities()

@@ -10,6 +10,7 @@
 #include "log.h"
 #include "VkInstanceHolder.h"
 #include "VkDeviceHolder.h"
+#include "VkSurfaceHolder.h"
 
 class Vulkan
 {
@@ -24,8 +25,8 @@ private:
 
     VkInstanceHolder* pInstanceHolder;
     VkDeviceHolder* pDeviceHolder;
+    VkSurfaceHolder* pSurfaceHolder;
 private:
-    bool _createLogicDevice();
     bool _getPhysicalDeviceSurfaceCapalities();
     bool _getPhysicalDeviceSurfaceFormats();
     bool _getPhysicalDeviceSurfacePresentModes();
@@ -35,7 +36,7 @@ private:
     void _dumpPhysicalDeviceSurfacePresentMode();
 
 public:
-    Vulkan():pInstanceHolder(nullptr), pDeviceHolder(nullptr){}
+    Vulkan():pInstanceHolder(nullptr), pDeviceHolder(nullptr), pSurfaceHolder(nullptr){}
     bool init();
     bool setSurface(ANativeWindow *window);
     void shutdown();

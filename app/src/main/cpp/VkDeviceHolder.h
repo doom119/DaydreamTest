@@ -12,6 +12,8 @@
 class VkDeviceHolder
 {
 public:
+    friend class VkSurfaceHolder;
+
     VkDeviceHolder(const VkInstance& instance);
     uint32_t getDeviceCount();
     bool isDiscreteGPU(uint32_t handle);
@@ -23,7 +25,7 @@ public:
     int32_t supportPresentQueueFamily(uint32_t deviceIndex, VkSurfaceKHR surface);
 
     //if support VK_KHR_SWAPCHAIN, return true, otherwise return false
-    bool supportKHRSwapChain(uint32_t deviceIndex);
+    bool supportSwapChain(uint32_t deviceIndex);
 
     bool selectPhysicalDevice(uint32_t deviceIndex);
 
