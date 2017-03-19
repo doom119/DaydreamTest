@@ -26,14 +26,6 @@ private:
     VkInstanceHolder* pInstanceHolder;
     VkDeviceHolder* pDeviceHolder;
     VkSurfaceHolder* pSurfaceHolder;
-private:
-    bool _getPhysicalDeviceSurfaceCapalities();
-    bool _getPhysicalDeviceSurfaceFormats();
-    bool _getPhysicalDeviceSurfacePresentModes();
-
-    void _dumpPhysicalDeviceSurfaceCapabilities();
-    void _dumpPhysicalDeviceSurfaceFormat();
-    void _dumpPhysicalDeviceSurfacePresentMode();
 
 public:
     Vulkan():pInstanceHolder(nullptr), pDeviceHolder(nullptr), pSurfaceHolder(nullptr){}

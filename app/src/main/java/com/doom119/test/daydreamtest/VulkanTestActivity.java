@@ -28,7 +28,7 @@ public class VulkanTestActivity extends Activity implements SurfaceHolder.Callba
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-//        Vulkan.setSurface(surfaceHolder.getSurface());
+        Vulkan.setSurface(surfaceHolder.getSurface());
     }
 
     @Override
