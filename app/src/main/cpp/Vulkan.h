@@ -15,22 +15,19 @@
 class Vulkan
 {
 private:
-    VkInstance mVkInstance;
-    VkPhysicalDevice mVkPhysicalDevice;
-    VkDevice mVkLogicalDevice;
-    VkSurfaceKHR mSurfaceKHR;
-    VkSurfaceCapabilitiesKHR mSurfaceCapabilitiesKHR;
-    VkSurfaceFormatKHR mSurfaceFormatKHR;
-    VkPresentModeKHR mPresentModeKHR;
-
     VkInstanceHolder* pInstanceHolder;
     VkDeviceHolder* pDeviceHolder;
     VkSurfaceHolder* pSurfaceHolder;
 
 public:
     Vulkan():pInstanceHolder(nullptr), pDeviceHolder(nullptr), pSurfaceHolder(nullptr){}
-    bool init();
-    bool setSurface(ANativeWindow *window);
+    bool createInstance();
+
+    //must call createInstance first
+    bool createAndroidSurface(ANativeWindow *window);
+
+    //must call createAndroidSurface first
+    bool createDevice();
     void shutdown();
 };
 

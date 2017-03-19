@@ -16,6 +16,9 @@ android {
                 cppFlags "-std=c++11 -frtti -fexceptions -g"
             }
         }
+        shaders {
+            glslcArgs.addAll(['-c', '-g'])
+        }
     }
     buildTypes {
         release {

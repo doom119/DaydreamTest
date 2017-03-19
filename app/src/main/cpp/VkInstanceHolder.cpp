@@ -11,11 +11,37 @@ VkInstanceHolder::VkInstanceHolder() {
     _getLayerProperties();
 }
 
-VkInstanceHolder::~VkInstanceHolder()
+void VkInstanceHolder::addExtensionName(const char* name)
+{
+    if(nullptr == name)
+        return;
+
+    mExtensionNames.push_back(name);
+}
+
+bool VkInstanceHolder::supportAndroidSurface()
+{
+    for (auto &&property : mExtProperties)
+    {
+        if(!strcmp(property.extensionName, VK_KHR_ANDROID_SURFACE_EXTENSION_NAME))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void VkInstanceHolder::release()
 {
     mExtProperties.clear();
     mLayerProperties.clear();
     vkDestroyInstance(mInstance, nullptr);
+}
+
+const VkInstance& VkInstanceHolder::getInstance() const
+{
+    return mInstance;
 }
 
 void VkInstanceHolder::_getLayerProperties()
@@ -68,7 +94,7 @@ void VkInstanceHolder::_getExtensionProperties()
     }
 }
 
-const VkInstance& VkInstanceHolder::createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion)
+bool VkInstanceHolder::createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion)
 {
     VkApplicationInfo appInfo = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -85,23 +111,21 @@ const VkInstance& VkInstanceHolder::createInstance(std::string appName, uint32_t
             .pNext = nullptr,
             .flags = 0,
             .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = 0,
-            .ppEnabledExtensionNames = nullptr,
+            .enabledExtensionCount = static_cast<uint32_t>(mExtensionNames.size()),
+            .ppEnabledExtensionNames = mExtensionNames.data(),
             .enabledLayerCount = 0,
             .ppEnabledLayerNames = nullptr
     };
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &mInstance);
-    if(result == VK_SUCCESS)
-    {
-        LOGI("Create Vulkan Instance Success");
-        return mInstance;
-    }
-    else
+    if(VK_SUCCESS != result)
     {
         LOGE("Create Vulkan Instance Failed, result=%d", result);
-        return nullptr;
+        return false;
     }
+
+    LOGI("Create Vulkan Instance Success");
+    return true;
 }
 
 void VkInstanceHolder::_dumpExtensionProperties()

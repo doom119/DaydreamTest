@@ -8,7 +8,8 @@
 #include "log.h"
 
 VkDeviceHolder::VkDeviceHolder(const VkInstance& instance):
-        mIsInited(false),mSelectedPhysicalDeviceIndex(-1)
+        mIsInited(false),mSelectedPhysicalDeviceIndex(-1),
+        mSelectedGraphicsQueueFamilyIndex(-1), mSelectedPresentQueueFamilyIndex(-1)
 {
     VkResult result;
     uint32_t deviceCount = 0;
@@ -128,6 +129,11 @@ int32_t VkDeviceHolder::supportPresentQueueFamily(uint32_t deviceIndex, VkSurfac
 
 bool VkDeviceHolder::supportSwapChain(uint32_t deviceIndex)
 {
+    if(!mIsInited)
+    {
+        return false;
+    }
+
     std::vector<VkExtensionProperties> properties;
     _getPhysicalDeviceExtensionProperties(mPhysicalDevices.at(deviceIndex), properties);
     for(const auto& property : properties)
@@ -150,15 +156,12 @@ bool VkDeviceHolder::selectPhysicalDevice(uint32_t deviceIndex)
     mSelectedPhysicalDevice = mPhysicalDevices.at(deviceIndex);
     mSelectedPhysicalDeviceIndex = deviceIndex;
 
-//    _getPhysicalDeviceProperties(mSelectedPhysicalDevice, mSelectedPhysicalDeviceProperties);
-//    _getPhysicalDeviceFeatures(mSelectedPhysicalDevice, mSelectedPhysicalDeviceFeatures);
-
     return true;
 }
 
 bool VkDeviceHolder::selectGraphicsQueueFamily(uint32_t queueFamilyIndex)
 {
-    if(!mIsInited)
+    if(!mIsInited || nullptr == mSelectedPhysicalDevice)
     {
         return false;
     }
@@ -175,7 +178,7 @@ bool VkDeviceHolder::selectGraphicsQueueFamily(uint32_t queueFamilyIndex)
 
 bool VkDeviceHolder::selectPresentQueueFamily(uint32_t queueFamilyIndex)
 {
-    if(!mIsInited)
+    if(!mIsInited || nullptr == mSelectedPhysicalDevice)
     {
         return false;
     }
@@ -200,9 +203,35 @@ void VkDeviceHolder::addExtensionName(const char* name)
     mExtensionNames.push_back(name);
 }
 
+const VkPhysicalDevice& VkDeviceHolder::getSelectedPhysicalDevice() const
+{
+    return mSelectedPhysicalDevice;
+}
+
+const VkDevice& VkDeviceHolder::getLogicalDevice() const
+{
+    return mLogicalDevice;
+}
+
+uint32_t VkDeviceHolder::getSelectedGraphicsQueueFamily() const
+{
+    return mSelectedGraphicsQueueFamilyIndex;
+}
+
+uint32_t VkDeviceHolder::getSelectedPresentQueueFamily() const
+{
+    return mSelectedPresentQueueFamilyIndex;
+}
 
 bool VkDeviceHolder::createLogicalDevice()
 {
+    if(mSelectedGraphicsQueueFamilyIndex < 0 ||
+            mSelectedPresentQueueFamilyIndex < 0 ||
+            nullptr == mSelectedPhysicalDevice)
+    {
+        return false;
+    }
+
     float queuePriorities[] = {1.0f};
     std::vector<VkDeviceQueueCreateInfo> queues;
     VkDeviceQueueCreateInfo graphicsQueue = {
@@ -242,6 +271,8 @@ bool VkDeviceHolder::createLogicalDevice()
         LOGE("Create Logical Device Failed, result=%d", result);
         return false;
     }
+
+    LOGI("Create Logical Device Success");
 
     vkGetDeviceQueue(mLogicalDevice, mSelectedGraphicsQueueFamilyIndex, 0, &mLogicalDeviceQueue);
 
@@ -350,4 +381,9 @@ void VkDeviceHolder::_dumpPhysicalDeviceExtensionProperties(const VkExtensionPro
     LOGD("Physical Device Extension Properties:\n");
     LOGD("\textensionName: %s", properties.extensionName);
     LOGD("\tspecVersion: %d", properties.specVersion);
+}
+
+void VkDeviceHolder::release()
+{
+    vkDestroyDevice(mLogicalDevice, nullptr);
 }

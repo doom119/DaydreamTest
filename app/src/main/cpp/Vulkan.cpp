@@ -5,11 +5,16 @@
 #include <vector>
 #include "Vulkan.h"
 
-bool Vulkan::init()
+bool Vulkan::createInstance()
 {
     pInstanceHolder = new VkInstanceHolder();
-    const VkInstance& vkInstance = pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
-    pDeviceHolder = new VkDeviceHolder(vkInstance);
+    if(!pInstanceHolder->supportAndroidSurface())
+    {
+        return false;
+    }
+    pInstanceHolder->addExtensionName(VK_KHR_SURFACE_EXTENSION_NAME);
+    pInstanceHolder->addExtensionName(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
+    pInstanceHolder->createInstance("VulkanTest", 1, "VulkanTest", 1);
 
     return true;
 }
@@ -17,24 +22,38 @@ bool Vulkan::init()
 void Vulkan::shutdown()
 {
     delete pInstanceHolder;
+
+    if(nullptr != pDeviceHolder)
+    {
+        pDeviceHolder->release();
+    }
     delete pDeviceHolder;
 }
 
-bool Vulkan::setSurface(ANativeWindow *window)
+//no need VkPhysicalDevice to create VkSurface
+bool Vulkan::createAndroidSurface(ANativeWindow *window)
 {
-    if(nullptr == pInstanceHolder || nullptr == pDeviceHolder || nullptr == window)
+    if (nullptr == pInstanceHolder || nullptr == window)
     {
         return false;
     }
 
-    if(nullptr != pSurfaceHolder)
+    if (nullptr != pSurfaceHolder)
     {
+        pSurfaceHolder->release(pInstanceHolder->getInstance(), pDeviceHolder->getLogicalDevice());
         delete pSurfaceHolder;
     }
 
-    pSurfaceHolder = new VkSurfaceHolder(pInstanceHolder, pDeviceHolder);
-    pSurfaceHolder->createAndroidSurface(window);
+    pSurfaceHolder = new VkSurfaceHolder();
+    return pSurfaceHolder->createAndroidSurface(pInstanceHolder->getInstance(), window);
+}
 
+bool Vulkan::createDevice()
+{
+    if(nullptr == pInstanceHolder || nullptr == pSurfaceHolder)
+        return false;
+
+    pDeviceHolder = new VkDeviceHolder(pInstanceHolder->getInstance());
     int deviceCount = pDeviceHolder->getDeviceCount();
     int selectedDevice = -1;
     int selectedGraphicsQueueFamily = -1;
@@ -44,13 +63,14 @@ bool Vulkan::setSurface(ANativeWindow *window)
         selectedGraphicsQueueFamily = pDeviceHolder->supportGraphicsQueueFamily(i);
         selectedPresentQueueFamily = pDeviceHolder->supportPresentQueueFamily(i, pSurfaceHolder->getSurface());
         if(selectedGraphicsQueueFamily >=0
-                && selectedPresentQueueFamily >=0
-                && pDeviceHolder->supportSwapChain(i))
+           && selectedPresentQueueFamily >=0
+           && pDeviceHolder->supportSwapChain(i))
         {
             selectedDevice = i;
         }
     }
-    LOGD("selectedDevice=%d, selectedGraphicsQueueFamily=%d", selectedDevice, selectedGraphicsQueueFamily);
+    LOGD("selectedDevice=%d, selectedGraphicsQueueFamily=%d, selectedPresentQueueFamily=%d",
+         selectedDevice, selectedGraphicsQueueFamily, selectedPresentQueueFamily);
     if(selectedDevice < 0)
     {
         return false;
@@ -61,8 +81,15 @@ bool Vulkan::setSurface(ANativeWindow *window)
     pDeviceHolder->selectPresentQueueFamily(selectedPresentQueueFamily);
     pDeviceHolder->addExtensionName(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     pDeviceHolder->createLogicalDevice();
-    return true;
 
+    pSurfaceHolder->selectSurfaceFormat(pDeviceHolder->getSelectedPhysicalDevice(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM);
+    pSurfaceHolder->selectSurfaceColorSpace(pDeviceHolder->getSelectedPhysicalDevice(), VkColorSpaceKHR::VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+    pSurfaceHolder->selectSurfacePresentMode(pDeviceHolder->getSelectedPhysicalDevice(), VkPresentModeKHR::VK_PRESENT_MODE_FIFO_KHR);
+    pSurfaceHolder->createSwapChain(pDeviceHolder->getLogicalDevice(),
+                                        pDeviceHolder->getSelectedGraphicsQueueFamily(),
+                                        pDeviceHolder->getSelectedPresentQueueFamily());
+
+    return true;
 }
 
 

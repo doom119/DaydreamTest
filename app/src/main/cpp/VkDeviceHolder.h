@@ -12,8 +12,6 @@
 class VkDeviceHolder
 {
 public:
-    friend class VkSurfaceHolder;
-
     VkDeviceHolder(const VkInstance& instance);
     uint32_t getDeviceCount();
     bool isDiscreteGPU(uint32_t handle);
@@ -37,10 +35,15 @@ public:
 
     void addExtensionName(const char* name);
 
+    const VkPhysicalDevice& getSelectedPhysicalDevice() const;
+    const VkDevice& getLogicalDevice() const;
+    uint32_t getSelectedGraphicsQueueFamily() const;
+    uint32_t getSelectedPresentQueueFamily() const;
+
     //must call selectPhysicalDevice first
     bool createLogicalDevice();
 
-    virtual ~VkDeviceHolder() { vkDestroyDevice(mLogicalDevice, nullptr); }
+    void release();
 
 private:
     void _getPhysicalDeviceProperties(const VkPhysicalDevice&, VkPhysicalDeviceProperties&);

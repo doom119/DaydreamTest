@@ -12,29 +12,27 @@
 class VkSurfaceHolder
 {
 public:
-    VkSurfaceHolder(const VkInstanceHolder*, const VkDeviceHolder*);
+    VkSurfaceHolder();
 
-    bool createAndroidSurface(ANativeWindow *window);
+    bool createAndroidSurface(const VkInstance& instance, ANativeWindow *window);
     const VkSurfaceKHR& getSurface();
-    bool supportSwapChain();
-    bool selectSurfaceFormat(VkFormat format);
-    bool selectSurfaceColorSpace(VkColorSpaceKHR colorSpace);
-    bool selectSurfacePresentMode(VkPresentModeKHR present);
+    bool selectSurfaceFormat(const VkPhysicalDevice& device, VkFormat format);
+    bool selectSurfaceColorSpace(const VkPhysicalDevice& device, VkColorSpaceKHR colorSpace);
+    bool selectSurfacePresentMode(const VkPhysicalDevice& device, VkPresentModeKHR present);
 
-    virtual ~VkSurfaceHolder() { vkDestroySurfaceKHR(pInstanceHolder->mInstance, mSurface, nullptr); }
+    bool createSwapChain(const VkDevice& device, uint32_t graphicsQueueFamily, uint32_t presentQueueFamily);
 
+    void release(const VkInstance& instance, const VkDevice& device);
 private:
-    bool _getSurfaceCapalities(VkSurfaceCapabilitiesKHR &capabilities);
-    bool _getSurfaceFormats(std::vector<VkSurfaceFormatKHR> &formats);
-    bool _getSurfacePresentModes(std::vector<VkPresentModeKHR> &presents);
+    bool _getSurfaceCapalities(const VkPhysicalDevice& device, VkSurfaceCapabilitiesKHR &capabilities);
+    bool _getSurfaceFormats(const VkPhysicalDevice& device, std::vector<VkSurfaceFormatKHR> &formats);
+    bool _getSurfacePresentModes(const VkPhysicalDevice& device, std::vector<VkPresentModeKHR> &presents);
 
     void _dumpSurfaceCapabilities(const VkSurfaceCapabilitiesKHR& capabilities);
     void _dumpSurfaceFormat(const VkSurfaceFormatKHR& format);
     void _dumpSurfacePresentMode(const VkPresentModeKHR& present);
 
 private:
-    const VkInstanceHolder* pInstanceHolder;
-    const VkDeviceHolder* pDeviceHolder;
 
     bool mHasSurface;
     VkFormat mSelectedFormat;
@@ -44,6 +42,8 @@ private:
     VkSurfaceCapabilitiesKHR mCapabilities;
     std::vector<VkSurfaceFormatKHR> mFormats;
     std::vector<VkPresentModeKHR> mPresentModes;
+
+    VkSwapchainKHR mSwapChain;
 };
 
 

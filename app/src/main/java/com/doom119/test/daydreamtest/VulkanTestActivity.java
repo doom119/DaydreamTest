@@ -2,7 +2,6 @@ package com.doom119.test.daydreamtest;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
@@ -23,12 +22,14 @@ public class VulkanTestActivity extends Activity implements SurfaceHolder.Callba
         surfaceView = (SurfaceView)findViewById(R.id.surface_view);
         surfaceView.getHolder().addCallback(this);
 
-        Vulkan.init();
+        Vulkan.createInstance();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        Vulkan.setSurface(surfaceHolder.getSurface());
+        if(Vulkan.createAndroidSurface(surfaceHolder.getSurface())) {
+            Vulkan.createDevice();
+        }
     }
 
     @Override

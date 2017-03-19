@@ -5,8 +5,6 @@
 #include <android/native_window_jni.h>
 #include "Vulkan.h"
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,15 +12,21 @@ extern "C" {
 Vulkan gVulkan;
 
 JNIEXPORT jboolean JNICALL
-Java_com_doom119_test_daydreamtest_Vulkan_setSurface(JNIEnv *env, jclass type, jobject surface)
+Java_com_doom119_test_daydreamtest_Vulkan_createAndroidSurface(JNIEnv *env, jclass type, jobject surface)
 {
-    return gVulkan.setSurface(ANativeWindow_fromSurface(env, surface));
+    return gVulkan.createAndroidSurface(ANativeWindow_fromSurface(env, surface));
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_doom119_test_daydreamtest_Vulkan_init(JNIEnv *env, jclass type)
+Java_com_doom119_test_daydreamtest_Vulkan_createInstance(JNIEnv *env, jclass type)
 {
-    return gVulkan.init();
+    return gVulkan.createInstance();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_doom119_test_daydreamtest_Vulkan_createDevice(JNIEnv *env, jclass type)
+{
+    return gVulkan.createDevice();
 }
 
 JNIEXPORT void JNICALL

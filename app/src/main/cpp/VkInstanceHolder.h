@@ -17,11 +17,14 @@ public:
     friend class VkSurfaceHolder;
 
     VkInstanceHolder();
-    const VkInstance& createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion);
-
-    virtual ~VkInstanceHolder();
+    void addExtensionName(const char* name);
+    bool supportAndroidSurface();
+    bool createInstance(std::string appName, uint32_t appVersion, std::string engineName, uint32_t engineVersion);
+    const VkInstance& getInstance() const;
+    void release();
 private:
     VkInstance mInstance;
+    std::vector<const char*> mExtensionNames;
     std::vector<VkExtensionProperties> mExtProperties;
     std::vector<VkLayerProperties> mLayerProperties;
 

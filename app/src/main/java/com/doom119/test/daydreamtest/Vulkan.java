@@ -19,7 +19,8 @@ public class Vulkan {
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
      */
-    public static native boolean init();
+    public static native boolean createInstance();
+    public static native boolean createAndroidSurface(Surface surface);
+    public static native boolean createDevice();
     public static native void shutdown();
-    public static native boolean setSurface(Surface surface);
 }
