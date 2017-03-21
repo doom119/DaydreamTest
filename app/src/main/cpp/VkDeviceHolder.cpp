@@ -361,6 +361,7 @@ void VkDeviceHolder::_dumpPhysicalDeviceFeatures(
     LOGD("\talphaToOne: %d", features.alphaToOne);
     LOGD("\tdepthBiasClamp: %d", features.depthBiasClamp);
     LOGD("\tgeometryShader: %d", features.geometryShader);
+    LOGD("\tmultiViewport: %d", features.multiViewport);
     //TODO more features
 }
 
