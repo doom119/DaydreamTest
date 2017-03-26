@@ -162,7 +162,24 @@ bool VkSurfaceHolder::createSwapChain(const VkDevice& device, uint32_t graphicsQ
     }
 
     LOGI("Create Swapchain Sucess");
+    mSurfaceWidth = mCapabilities.currentExtent.width;
+    mSurfaceHeight = mCapabilities.currentExtent.height;
     return true;
+}
+
+uint32_t VkSurfaceHolder::getWidth() const
+{
+    return mSurfaceWidth;
+}
+
+uint32_t VkSurfaceHolder::getHeight() const
+{
+    return mSurfaceHeight;
+}
+
+VkFormat VkSurfaceHolder::getFormat() const
+{
+    return mSelectedFormat;
 }
 
 bool VkSurfaceHolder::_getSurfaceCapalities(const VkPhysicalDevice& device, VkSurfaceCapabilitiesKHR &capabilities)

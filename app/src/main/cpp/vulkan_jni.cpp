@@ -3,6 +3,8 @@
 //
 #include <jni.h>
 #include <android/native_window_jni.h>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 #include "Vulkan.h"
 
 #ifdef __cplusplus
@@ -18,9 +20,9 @@ Java_com_doom119_test_daydreamtest_Vulkan_createAndroidSurface(JNIEnv *env, jcla
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_doom119_test_daydreamtest_Vulkan_createInstance(JNIEnv *env, jclass type)
+Java_com_doom119_test_daydreamtest_Vulkan_createInstance(JNIEnv *env, jclass type, jobject assets)
 {
-    return gVulkan.createInstance();
+    return gVulkan.createInstance(AAssetManager_fromJava(env, assets));
 }
 
 JNIEXPORT jboolean JNICALL

@@ -1,5 +1,6 @@
 package com.doom119.test.daydreamtest;
 
+import android.content.res.AssetManager;
 import android.util.Log;
 import android.view.Surface;
 
@@ -18,8 +19,9 @@ public class Vulkan {
     /**
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
+     * @param assets
      */
-    public static native boolean createInstance();
+    public static native boolean createInstance(AssetManager assets);
     public static native boolean createAndroidSurface(Surface surface);
     public static native boolean createDevice();
     public static native void shutdown();

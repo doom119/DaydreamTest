@@ -16,9 +16,74 @@ VkPipelineHolder::VkPipelineHolder()
     mViewportCreateInfo.pScissors = nullptr;
 }
 
-bool VkPipelineHolder::createShader(const VkDevice &device)
+bool VkPipelineHolder::createShader(const VkDevice &device, const AAssetManager* pAssetsManager)
 {
-    //todo
+    AAsset* vertexFile = AAssetManager_open(const_cast<AAssetManager*>(pAssetsManager),
+                                            "shaders/vertex.vert.spv", AASSET_MODE_BUFFER);
+    size_t vertexLength = AAsset_getLength(vertexFile);
+    char* vertexContent = new char[vertexLength];
+    AAsset_read(vertexFile, vertexContent, vertexLength);
+    VkShaderModuleCreateInfo vertexInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .flags = 0,
+            .pNext = nullptr,
+            .pCode = (uint32_t*)vertexContent,
+            .codeSize = vertexLength
+    };
+    AAsset_close(vertexFile);
+
+    AAsset* fragFile = AAssetManager_open(const_cast<AAssetManager*>(pAssetsManager),
+                                          "shaders/fragment.frag.spv", AASSET_MODE_BUFFER);
+    size_t fragLength = AAsset_getLength(fragFile);
+    char* fragContent = new char[fragLength];
+    AAsset_read(fragFile, fragContent, fragLength);
+    VkShaderModuleCreateInfo fragInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .flags = 0,
+            .pNext = nullptr,
+            .pCode = (uint32_t*)fragContent,
+            .codeSize = fragLength
+    };
+    AAsset_close(fragFile);
+
+    VkResult result = vkCreateShaderModule(device, &vertexInfo, nullptr, &mVertexShaderModule);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Vertex Shader Module Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Create Vertex Shader Module Success");
+
+    result = vkCreateShaderModule(device, &fragInfo, nullptr, &mFragmentShaderModule);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Fragment Shader Module Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Create Fragment Shader Module Success");
+
+    VkPipelineShaderStageCreateInfo vertexStage = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .module = mVertexShaderModule,
+            .pName = "main"
+    };
+    VkPipelineShaderStageCreateInfo fragStage = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .module = mFragmentShaderModule,
+            .pName = "main"
+    };
+    mShaderStageCreateInfos.push_back(vertexStage);
+    mShaderStageCreateInfos.push_back(fragStage);
+
+    delete fragContent;
+    delete vertexContent;
+    return true;
 }
 
 void VkPipelineHolder::createVertexInput()
@@ -203,15 +268,45 @@ bool VkPipelineHolder::createRenderPass(const VkDevice& device, VkFormat format)
     }
 
     LOGI("Create Render Pass Success");
+    return true;
 }
 
 bool VkPipelineHolder::createPipeline(const VkDevice &device)
 {
-    //todo
+    VkGraphicsPipelineCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .pStages = mShaderStageCreateInfos.data(),
+            .pVertexInputState = &mVertexInputCreateInfo,
+            .pInputAssemblyState = &mInputAssemblyCreateInfo,
+            .pViewportState = &mViewportCreateInfo,
+            .pRasterizationState = &mRasterizationCreateInfo,
+            .pMultisampleState = &mMultisamplingCreateInfo,
+            .pDepthStencilState = nullptr,
+            .pColorBlendState = &mColorBlendCreateInfo,
+            .pDynamicState = nullptr,
+            .layout = mLayout,
+            .renderPass = mRenderPass,
+            .subpass = 0,
+            .basePipelineIndex = -1,
+            .basePipelineHandle = nullptr
+    };
+    VkResult result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &mPipeline);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Graphics Pipeline Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Create Graphics Pipeline Success");
+    return true;
 }
 
 void VkPipelineHolder::release(const VkDevice& device)
 {
+    vkDestroyShaderModule(device, mVertexShaderModule, nullptr);
+    vkDestroyShaderModule(device, mFragmentShaderModule, nullptr);
     vkDestroyPipelineLayout(device, mLayout, nullptr);
     vkDestroyRenderPass(device, mRenderPass, nullptr);
+    vkDestroyPipeline(device, mPipeline, nullptr);
 }

@@ -8,12 +8,13 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <android/asset_manager.h>
 
 class VkPipelineHolder
 {
 public:
     VkPipelineHolder();
-    bool createShader(const VkDevice& device);
+    bool createShader(const VkDevice& device, const AAssetManager* pAssetsManager);
     void createVertexInput();
     void createInputAssembly(VkPrimitiveTopology topology, VkBool32 primitiveRestartEnable);
     void createViewPort(float x, float y, float width, float height, float minDepth, float maxDepth);
@@ -33,8 +34,12 @@ private:
     VkPipelineRasterizationStateCreateInfo mRasterizationCreateInfo;
     VkPipelineMultisampleStateCreateInfo mMultisamplingCreateInfo;
     VkPipelineColorBlendStateCreateInfo mColorBlendCreateInfo;
+    VkShaderModule mVertexShaderModule;
+    VkShaderModule mFragmentShaderModule;
+    std::vector<VkPipelineShaderStageCreateInfo> mShaderStageCreateInfos;
     VkPipelineLayout mLayout;
     VkRenderPass mRenderPass;
+    VkPipeline mPipeline;
 };
 
 #endif //DAYDREAMTEST_VKPIPLELINEHOLDER_H

@@ -5,8 +5,9 @@
 #include <vector>
 #include "Vulkan.h"
 
-bool Vulkan::createInstance()
+bool Vulkan::createInstance(AAssetManager* pAssets)
 {
+    pAssetManager = pAssets;
     pInstanceHolder = new VkInstanceHolder();
     if(!pInstanceHolder->supportAndroidSurface())
     {
@@ -21,13 +22,26 @@ bool Vulkan::createInstance()
 
 void Vulkan::shutdown()
 {
-    delete pInstanceHolder;
+    if(nullptr != pPipeline)
+    {
+        pPipeline->release(pDeviceHolder->getLogicalDevice());
+    }
+    delete pPipeline;
+    if(nullptr != pSurfaceHolder)
+    {
+        pSurfaceHolder->release(pInstanceHolder->getInstance(), pDeviceHolder->getLogicalDevice());
+    }
+    delete pSurfaceHolder;
 
     if(nullptr != pDeviceHolder)
     {
         pDeviceHolder->release();
     }
     delete pDeviceHolder;
+
+    delete pInstanceHolder;
+
+    delete pAssetManager;
 }
 
 //no need VkPhysicalDevice to create VkSurface
@@ -89,6 +103,18 @@ bool Vulkan::createDevice()
                                         pDeviceHolder->getSelectedGraphicsQueueFamily(),
                                         pDeviceHolder->getSelectedPresentQueueFamily());
 
+    pPipeline = new VkPipelineHolder();
+    pPipeline->createShader(pDeviceHolder->getLogicalDevice(), pAssetManager);
+    pPipeline->createVertexInput();
+    pPipeline->createInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
+    pPipeline->createViewPort(0.0f, 0.0f, (float)pSurfaceHolder->getWidth(), (float)pSurfaceHolder->getHeight(), 0.0f, 1.0f);
+    pPipeline->createScissor(0, 0, pSurfaceHolder->getWidth(), pSurfaceHolder->getHeight());
+    pPipeline->createRasterization(VkPolygonMode::VK_POLYGON_MODE_FILL, 1.0f, VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT, VkFrontFace::VK_FRONT_FACE_CLOCKWISE);
+    pPipeline->createMultisampling();
+    pPipeline->createColorBlend();
+    pPipeline->createLayout(pDeviceHolder->getLogicalDevice());
+    pPipeline->createRenderPass(pDeviceHolder->getLogicalDevice(), pSurfaceHolder->getFormat());
+    pPipeline->createPipeline(pDeviceHolder->getLogicalDevice());
     return true;
 }
 

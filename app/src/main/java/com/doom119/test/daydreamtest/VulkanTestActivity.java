@@ -21,8 +21,7 @@ public class VulkanTestActivity extends Activity implements SurfaceHolder.Callba
         textView = (TextView)findViewById(R.id.text_view);
         surfaceView = (SurfaceView)findViewById(R.id.surface_view);
         surfaceView.getHolder().addCallback(this);
-
-        Vulkan.createInstance();
+        Vulkan.createInstance(getApplicationContext().getAssets());
     }
 
     @Override
