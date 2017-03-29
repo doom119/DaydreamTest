@@ -24,6 +24,7 @@ public:
     uint32_t getWidth() const;
     uint32_t getHeight() const;
     VkFormat getFormat() const;
+    const std::vector<VkImageView*>& getImageViews() const;
     void release(const VkInstance& instance, const VkDevice& device);
 private:
     bool _getSurfaceCapalities(const VkPhysicalDevice& device, VkSurfaceCapabilitiesKHR &capabilities);
@@ -44,6 +45,8 @@ private:
     VkSurfaceCapabilitiesKHR mCapabilities;
     std::vector<VkSurfaceFormatKHR> mFormats;
     std::vector<VkPresentModeKHR> mPresentModes;
+    std::vector<VkImage> mImages;
+    std::vector<VkImageView*> mImageViews;
     uint32_t mSurfaceWidth;
     uint32_t mSurfaceHeight;
 

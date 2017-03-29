@@ -2,6 +2,7 @@
 // Created by Doom119 on 21/3/9.
 //
 
+#include <memory.h>
 #include "VkPipelineHolder.h"
 #include "log.h"
 
@@ -68,7 +69,8 @@ bool VkPipelineHolder::createShader(const VkDevice &device, const AAssetManager*
             .flags = 0,
             .stage = VK_SHADER_STAGE_VERTEX_BIT,
             .module = mVertexShaderModule,
-            .pName = "main"
+            .pName = "main",
+            .pSpecializationInfo = nullptr
     };
     VkPipelineShaderStageCreateInfo fragStage = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -76,13 +78,15 @@ bool VkPipelineHolder::createShader(const VkDevice &device, const AAssetManager*
             .flags = 0,
             .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
             .module = mFragmentShaderModule,
-            .pName = "main"
+            .pName = "main",
+            .pSpecializationInfo = nullptr
     };
-    mShaderStageCreateInfos.push_back(vertexStage);
-    mShaderStageCreateInfos.push_back(fragStage);
+    mShaderStageCreateInfos = new VkPipelineShaderStageCreateInfo[2]{
+            vertexStage, fragStage
+    };
 
-    delete fragContent;
-    delete vertexContent;
+//    delete fragContent;
+//    delete vertexContent;
     return true;
 }
 
@@ -112,28 +116,21 @@ void VkPipelineHolder::createInputAssembly(VkPrimitiveTopology topology, VkBool3
 
 void VkPipelineHolder::createViewPort(float x, float y, float width, float height, float minDepth, float maxDepth)
 {
-    VkViewport viewport = {
-            .x = x,
-            .y = y,
-            .width = width,
-            .height = height,
-            .minDepth = minDepth,
-            .maxDepth = maxDepth
+    VkViewport* viewport = new VkViewport{
+        x, y, width, height, minDepth, maxDepth
     };
     mViewportCreateInfo.viewportCount = 1;
-    mViewportCreateInfo.pViewports = &viewport;
+    mViewportCreateInfo.pViewports = viewport;
 }
 
 void VkPipelineHolder::createScissor(int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
-    VkRect2D scissor = {
-            .offset.x = x,
-            .offset.y = y,
-            .extent.width = width,
-            .extent.height = height
+    VkRect2D* scissor = new VkRect2D{
+            {x, y},
+            {width, height}
     };
     mViewportCreateInfo.scissorCount = 1;
-    mViewportCreateInfo.pScissors = &scissor;
+    mViewportCreateInfo.pScissors = scissor;
 }
 
 void VkPipelineHolder::createRasterization(VkPolygonMode polygonMode, float lineWidth,
@@ -199,6 +196,7 @@ void VkPipelineHolder::createColorBlend()
 
 bool VkPipelineHolder::createLayout(const VkDevice& device)
 {
+    memset(&mLayout, 0, sizeof(mLayout));
     VkPipelineLayoutCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .pNext = nullptr,
@@ -273,11 +271,33 @@ bool VkPipelineHolder::createRenderPass(const VkDevice& device, VkFormat format)
 
 bool VkPipelineHolder::createPipeline(const VkDevice &device)
 {
+    memset(&mPipeline, 0, sizeof(mPipeline));
+    VkPipelineShaderStageCreateInfo shaderStages[2] = {
+            {
+                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
+                    .stage = VK_SHADER_STAGE_VERTEX_BIT,
+                    .module = mVertexShaderModule,
+                    .pName = "main",
+                    .pSpecializationInfo = nullptr,
+            },
+            {
+                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
+                    .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+                    .module = mFragmentShaderModule,
+                    .pName = "main",
+                    .pSpecializationInfo = nullptr,
+            }
+    };
     VkGraphicsPipelineCreateInfo info = {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
-            .pStages = mShaderStageCreateInfos.data(),
+            .stageCount = 2,
+            .pStages = mShaderStageCreateInfos,
             .pVertexInputState = &mVertexInputCreateInfo,
             .pInputAssemblyState = &mInputAssemblyCreateInfo,
             .pViewportState = &mViewportCreateInfo,
@@ -302,8 +322,116 @@ bool VkPipelineHolder::createPipeline(const VkDevice &device)
     return true;
 }
 
+bool VkPipelineHolder::createFramebuffer(const VkDevice& device, const std::vector<VkImageView*> imageViews, uint32_t width, uint32_t height)
+{
+    for(int i = 0; i < imageViews.size(); ++i)
+    {
+        VkFramebufferCreateInfo info = {
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .width = width,
+                .height = height,
+                .layers = 1,
+                .attachmentCount = 1,
+                .pAttachments = imageViews[i],
+                .renderPass = mRenderPass
+        };
+        VkFramebuffer *buffer = new VkFramebuffer;
+        VkResult result = vkCreateFramebuffer(device, &info, nullptr, buffer);
+        if(VK_SUCCESS != result)
+        {
+            LOGW("Create Framebuffer Failed, result=%d", result);
+            return false;
+        }
+        LOGI("Create Framebuffer Success");
+        mFramebuffers.push_back(buffer);
+    }
+
+    return true;
+}
+
+bool VkPipelineHolder::createCommandPool(const VkDevice& device, uint32_t queueFamilyIndex)
+{
+    VkCommandPoolCreateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .queueFamilyIndex = queueFamilyIndex,
+    };
+    VkResult result = vkCreateCommandPool(device, &info, nullptr, &mCommandPool);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Command Pool Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Create Command Pool Success");
+    return true;
+}
+
+bool VkPipelineHolder::createCommandBuffer(const VkDevice& device, uint32_t width, uint32_t height)
+{
+    mCommandBuffers.resize(mFramebuffers.size());
+    VkCommandBufferAllocateInfo info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .pNext = nullptr,
+            .commandBufferCount = static_cast<uint32_t>(mFramebuffers.size()),
+            .commandPool = mCommandPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
+    };
+    VkResult result = vkAllocateCommandBuffers(device, &info, mCommandBuffers.data());
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Allocate Command Buffers Failed, result=%d", result);
+        return false;
+    };
+    LOGI("Allocate Command Buffer Success");
+
+    for (int i = 0; i < mCommandBuffers.size(); ++i)
+    {
+        VkCommandBufferBeginInfo info = {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                .pNext = nullptr,
+                .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+                .pInheritanceInfo = nullptr,
+        };
+        VkResult result = vkBeginCommandBuffer(mCommandBuffers.at(i), &info);
+        if(VK_SUCCESS != result)
+        {
+            LOGW("Begin Command Buffer Failed, result=%d", result);
+            return false;
+        }
+        LOGI("Begin Command Buffer Success");
+
+        VkClearValue clearColor = {0.0f, 1.0f, 0.0f, 1.0f};
+        VkRenderPassBeginInfo renderPassBeginInfo = {
+                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                .pNext = nullptr,
+                .renderPass = mRenderPass,
+                .framebuffer = *mFramebuffers.at(i),
+                .renderArea.offset = {0, 0},
+                .renderArea.extent = {width, height},
+                .clearValueCount = 1,
+                .pClearValues = &clearColor,
+        };
+        vkCmdBeginRenderPass(mCommandBuffers.at(i), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(mCommandBuffers.at(i), VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
+        vkCmdDraw(mCommandBuffers.at(i), 3, 1, 0, 0);
+        vkCmdEndRenderPass(mCommandBuffers.at(i));
+        vkEndCommandBuffer(mCommandBuffers.at(i));
+    }
+    return true;
+}
+
 void VkPipelineHolder::release(const VkDevice& device)
 {
+    vkFreeCommandBuffers(device, mCommandPool, mCommandBuffers.size(), mCommandBuffers.data());
+    vkDestroyCommandPool(device, mCommandPool, nullptr);
+    for(int i = 0; i < mFramebuffers.size(); ++i)
+    {
+        vkDestroyFramebuffer(device, *mFramebuffers[i], nullptr);
+        delete mFramebuffers[i];
+    }
     vkDestroyShaderModule(device, mVertexShaderModule, nullptr);
     vkDestroyShaderModule(device, mFragmentShaderModule, nullptr);
     vkDestroyPipelineLayout(device, mLayout, nullptr);

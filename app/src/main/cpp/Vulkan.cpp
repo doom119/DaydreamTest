@@ -115,6 +115,9 @@ bool Vulkan::createDevice()
     pPipeline->createLayout(pDeviceHolder->getLogicalDevice());
     pPipeline->createRenderPass(pDeviceHolder->getLogicalDevice(), pSurfaceHolder->getFormat());
     pPipeline->createPipeline(pDeviceHolder->getLogicalDevice());
+    pPipeline->createFramebuffer(pDeviceHolder->getLogicalDevice(), pSurfaceHolder->getImageViews(), pSurfaceHolder->getWidth(), pSurfaceHolder->getHeight());
+    pPipeline->createCommandPool(pDeviceHolder->getLogicalDevice(), pDeviceHolder->getSelectedGraphicsQueueFamily());
+    pPipeline->createCommandBuffer(pDeviceHolder->getLogicalDevice(), pSurfaceHolder->getWidth(), pSurfaceHolder->getHeight());
     return true;
 }
 

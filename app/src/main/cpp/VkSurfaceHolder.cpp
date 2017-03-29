@@ -164,7 +164,58 @@ bool VkSurfaceHolder::createSwapChain(const VkDevice& device, uint32_t graphicsQ
     LOGI("Create Swapchain Sucess");
     mSurfaceWidth = mCapabilities.currentExtent.width;
     mSurfaceHeight = mCapabilities.currentExtent.height;
+
+    uint32_t imageCount = 0;
+    result = vkGetSwapchainImagesKHR(device, mSwapChain, &imageCount, nullptr);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Get SwapChain Images Count Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Get SwapChain Images Count Success, count=%d", imageCount);
+    mImages.resize(imageCount);
+    result = vkGetSwapchainImagesKHR(device, mSwapChain, &imageCount, mImages.data());
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Get SwapChain Images Failed, result=%d", result);
+        return false;
+    }
+    LOGI("Get SwapChain Images Success");
+
+    for (auto &&image : mImages)
+    {
+        VkImageViewCreateInfo info = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .format = mSelectedFormat,
+                .image = image,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
+                .subresourceRange = {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseArrayLayer = 0,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .layerCount = 1
+                },
+        };
+        VkImageView* imageView = new VkImageView;
+        VkResult result = vkCreateImageView(device, &info, nullptr, imageView);
+        if(VK_SUCCESS != result)
+        {
+            LOGW("Create ImageView Failed, result=%d", result);
+            return false;
+        };
+        LOGI("Create ImageView Success");
+        mImageViews.push_back(imageView);
+    }
     return true;
+}
+
+const std::vector<VkImageView*>& VkSurfaceHolder::getImageViews() const
+{
+    return mImageViews;
 }
 
 uint32_t VkSurfaceHolder::getWidth() const
@@ -359,6 +410,15 @@ void VkSurfaceHolder::_dumpSurfacePresentMode(const VkPresentModeKHR& present)
 
 void VkSurfaceHolder::release(const VkInstance& instance, const VkDevice& device)
 {
+    for (int i = 0; i < mImageViews.size(); ++i)
+    {
+        vkDestroyImageView(device, *mImageViews[i], nullptr);
+        delete mImageViews[i];
+    }
+    for (auto &&image : mImages)
+    {
+        vkDestroyImage(device, image, nullptr);
+    }
     vkDestroySurfaceKHR(instance, mSurface, nullptr);
     vkDestroySwapchainKHR(device, mSwapChain, nullptr);
 }
