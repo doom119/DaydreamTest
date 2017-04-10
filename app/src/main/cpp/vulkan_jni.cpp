@@ -32,6 +32,12 @@ Java_com_doom119_test_daydreamtest_Vulkan_createDevice(JNIEnv *env, jclass type)
 }
 
 JNIEXPORT void JNICALL
+Java_com_doom119_test_daydreamtest_Vulkan_draw(JNIEnv *env, jclass type)
+{
+    gVulkan.draw();
+}
+
+JNIEXPORT void JNICALL
 Java_com_doom119_test_daydreamtest_Vulkan_shutdown(JNIEnv *env, jclass type)
 {
     gVulkan.shutdown();

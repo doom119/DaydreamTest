@@ -32,6 +32,8 @@ public:
 
     //must call createAndroidSurface first
     bool createDevice();
+
+    void draw();
     void shutdown();
 };
 

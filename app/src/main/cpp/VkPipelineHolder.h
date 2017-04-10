@@ -28,6 +28,7 @@ public:
     bool createFramebuffer(const VkDevice& device, const std::vector<VkImageView*> imageViews, uint32_t width, uint32_t height);
     bool createCommandPool(const VkDevice& device, uint32_t queueFamilyIndex);
     bool createCommandBuffer(const VkDevice& device, uint32_t width, uint32_t height);
+    void draw(VkDevice& device, VkSwapchainKHR &swapchain, VkQueue& queue);
     void release(const VkDevice& device);
 private:
     VkPipelineVertexInputStateCreateInfo mVertexInputCreateInfo;
@@ -45,6 +46,8 @@ private:
     std::vector<VkFramebuffer*> mFramebuffers;
     VkCommandPool mCommandPool;
     std::vector<VkCommandBuffer> mCommandBuffers;
+    VkFence mFence;
+    VkSemaphore mSemaphore;
 };
 
 #endif //DAYDREAMTEST_VKPIPLELINEHOLDER_H

@@ -233,6 +233,11 @@ VkFormat VkSurfaceHolder::getFormat() const
     return mSelectedFormat;
 }
 
+VkSwapchainKHR & VkSurfaceHolder::getSwapChain()
+{
+    return mSwapChain;
+}
+
 bool VkSurfaceHolder::_getSurfaceCapalities(const VkPhysicalDevice& device, VkSurfaceCapabilitiesKHR &capabilities)
 {
     if(!mHasSurface)

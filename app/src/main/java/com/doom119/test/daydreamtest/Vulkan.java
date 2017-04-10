@@ -24,5 +24,6 @@ public class Vulkan {
     public static native boolean createInstance(AssetManager assets);
     public static native boolean createAndroidSurface(Surface surface);
     public static native boolean createDevice();
+    public static native void draw();
     public static native void shutdown();
 }

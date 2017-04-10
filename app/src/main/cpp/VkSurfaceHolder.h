@@ -24,6 +24,7 @@ public:
     uint32_t getWidth() const;
     uint32_t getHeight() const;
     VkFormat getFormat() const;
+    VkSwapchainKHR & getSwapChain();
     const std::vector<VkImageView*>& getImageViews() const;
     void release(const VkInstance& instance, const VkDevice& device);
 private:

@@ -16,7 +16,7 @@
         android:theme="@style/AppTheme">
         <activity android:name=".VulkanTestActivity"
             android:enableVrMode="gvr_vr_mode_component"
-            android:resizeableActivity="false" android:screenOrientation="landscape">
+            android:resizeableActivity="false" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <!--<category android:name="com.google.intent.category.DAYDREAM"/>-->

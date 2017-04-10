@@ -36,9 +36,11 @@ public:
     void addExtensionName(const char* name);
 
     const VkPhysicalDevice& getSelectedPhysicalDevice() const;
-    const VkDevice& getLogicalDevice() const;
+    VkDevice& getLogicalDevice();
     uint32_t getSelectedGraphicsQueueFamily() const;
     uint32_t getSelectedPresentQueueFamily() const;
+
+    VkQueue & getQueue();
 
     //must call selectPhysicalDevice first
     bool createLogicalDevice();

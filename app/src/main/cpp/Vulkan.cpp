@@ -121,4 +121,8 @@ bool Vulkan::createDevice()
     return true;
 }
 
+void Vulkan::draw() {
+    pPipeline->draw(pDeviceHolder->getLogicalDevice(), pSurfaceHolder->getSwapChain(), pDeviceHolder->getQueue());
+}
+
 

@@ -420,7 +420,75 @@ bool VkPipelineHolder::createCommandBuffer(const VkDevice& device, uint32_t widt
         vkCmdEndRenderPass(mCommandBuffers.at(i));
         vkEndCommandBuffer(mCommandBuffers.at(i));
     }
+
+    VkFenceCreateInfo fenceInfo = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0
+    };
+    result = vkCreateFence(device, &fenceInfo, nullptr, &mFence);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Fence Failed, result=%d", result);
+        return false;
+    }
+    LOGW("Create Fence Success");
+
+    VkSemaphoreCreateInfo semInfo = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0
+    };
+    result = vkCreateSemaphore(device, &semInfo, nullptr, &mSemaphore);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Create Semaphore Failed, result=%d", result);
+        return false;
+    }
+    LOGW("Create Semaphore Success");
     return true;
+}
+
+void VkPipelineHolder::draw(VkDevice& device, VkSwapchainKHR& swapchain, VkQueue& queue) {
+    uint32_t imageIndex;
+    VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, mSemaphore, mFence, &imageIndex);
+    if(VK_SUCCESS != result) {
+        LOGW("Acquire Next Image Failed");
+        return;
+    }
+    LOGI("Acquire Next Image Success");
+    result = vkResetFences(device, 1, &mFence);
+    if(VK_SUCCESS != result)
+    {
+        LOGW("Reset Fences Failed, result=%d", result);
+        return;
+    }
+    LOGI("Reset Fences Success");
+
+    VkSubmitInfo submit_info = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &mSemaphore,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &mCommandBuffers.at(imageIndex),
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = nullptr
+    };
+    vkQueueSubmit(queue, 1, &submit_info, mFence);
+    vkWaitForFences(device, 1, &mFence, VK_TRUE, 100000000);
+
+    VkPresentInfoKHR presentInfo {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pNext = nullptr,
+            .swapchainCount = 1,
+            .pSwapchains = &swapchain,
+            .pImageIndices = &imageIndex,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .pResults = &result,
+    };
+    vkQueuePresentKHR(queue, &presentInfo);
 }
 
 void VkPipelineHolder::release(const VkDevice& device)

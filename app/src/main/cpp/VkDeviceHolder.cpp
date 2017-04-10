@@ -208,7 +208,7 @@ const VkPhysicalDevice& VkDeviceHolder::getSelectedPhysicalDevice() const
     return mSelectedPhysicalDevice;
 }
 
-const VkDevice& VkDeviceHolder::getLogicalDevice() const
+VkDevice& VkDeviceHolder::getLogicalDevice()
 {
     return mLogicalDevice;
 }
@@ -221,6 +221,11 @@ uint32_t VkDeviceHolder::getSelectedGraphicsQueueFamily() const
 uint32_t VkDeviceHolder::getSelectedPresentQueueFamily() const
 {
     return mSelectedPresentQueueFamilyIndex;
+}
+
+VkQueue & VkDeviceHolder::getQueue()
+{
+    return mLogicalDeviceQueue;
 }
 
 bool VkDeviceHolder::createLogicalDevice()
