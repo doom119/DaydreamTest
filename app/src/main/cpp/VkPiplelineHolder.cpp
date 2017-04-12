@@ -359,14 +359,15 @@ bool VkPipelineHolder::createCommandPool(const VkDevice& device, uint32_t queueF
             .flags = 0,
             .queueFamilyIndex = queueFamilyIndex,
     };
-    VkResult result = vkCreateCommandPool(device, &info, nullptr, &mCommandPool);
-    if(VK_SUCCESS != result)
-    {
-        LOGW("Create Command Pool Failed, result=%d", result);
-        return false;
-    }
-    LOGI("Create Command Pool Success");
-    return true;
+//    VkResult result = vkCreateCommandPool(device, &info, nullptr, &mCommandPool);
+//    if(VK_SUCCESS != result)
+//    {
+//        LOGW("Create Command Pool Failed, result=%d", result);
+//        return false;
+//    }
+//    LOGI("Create Command Pool Success");
+//    return true;
+    VK_RESULTCHECK(vkCreateCommandPool, device, &info, nullptr, &mCommandPool)
 }
 
 bool VkPipelineHolder::createCommandBuffer(const VkDevice& device, uint32_t width, uint32_t height)
@@ -453,17 +454,17 @@ void VkPipelineHolder::draw(VkDevice& device, VkSwapchainKHR& swapchain, VkQueue
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, mSemaphore, mFence, &imageIndex);
     if(VK_SUCCESS != result) {
-        LOGW("Acquire Next Image Failed");
+//        LOGW("Acquire Next Image Failed");
         return;
     }
-    LOGI("Acquire Next Image Success");
+//    LOGI("Acquire Next Image Success");
     result = vkResetFences(device, 1, &mFence);
     if(VK_SUCCESS != result)
     {
-        LOGW("Reset Fences Failed, result=%d", result);
+//        LOGW("Reset Fences Failed, result=%d", result);
         return;
     }
-    LOGI("Reset Fences Success");
+//    LOGI("Reset Fences Success");
 
     VkSubmitInfo submit_info = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
